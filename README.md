@@ -52,6 +52,7 @@ ITE Device(8291) is integrated in widely-used Tongfang gaming laptop barebones:
 - HIDevolution EVOC 16GK5 (US reseller)
 - Obsidian GK5CP (PT reseller)
 - Vulcan JinGang GTX Standard
+
 ## Project status
 
 #### Working:
@@ -93,7 +94,7 @@ sudo pip3 install avell-unofficial-control-center
 Colors available are: `red`, `green`, `blue`, `teal`, `pink`, `yellow`, `orange`, `white`, `olive`, `maroon`, `brown`, `gray`, `skyblue`, `navy`, `crimson`, `darkgreen`, `lightgreen`, `gold`, `violet`.<br>
 Brightness options are: `1`,`2`,`3` and `4`.<br>
 
-To set `green` color in all keys with max brightness:
+To set `green` color on all keys with max brightness:
 
 ```bash
 aucc -c green -b 4
@@ -120,9 +121,9 @@ To set keyboard predefined custom styles:
 aucc -s style
 ```
 
-Styles available are `rainbow`, `marquee`, `wave`, `raindrop`, `aurora`, `random`, `reactive`, `breathing`, `ripple`, `reactiveripple`, `reactiveaurora`
+Styles available are `rainbow`, `marquee`, `wave`, `raindrop`, `aurora`, `random`, `reactive`, `breathing`, `ripple`, `reactiveripple`, `reactiveaurora`, `fireworks`.
 
-Additional single colors are available for the following styles: `raindrop`, `aurora`, `random`, `reactive`, `breathing`, `ripple`, `reactiveripple` and `reactiveaurora`.
+Additional single colors are available for the following styles: `raindrop`, `aurora`, `random`, `reactive`, `breathing`, `ripple`, `reactiveripple`, `reactiveaurora` and `fireworks`.
 The colors available are: Red (r), Orange (o), Yellow (y), Green (g), Blue (b), Teal (t), Purple (p).
 
 Append those styles with the start letter of the color you would like. For example: `rippler` = Ripple Red, `reactiveo` = Reactive Orange, `reactiveripplep` = Reactive Ripple Purple.
@@ -133,57 +134,6 @@ To disable all keys:
 
 ```bash
 aucc -d
-```
-
-## Add aucc to run on System Startup in 3 steps.
-
-## The following commands need to be executed with root (superuser), or using sudo "command"
-
-### step 1:
-
-create `aucc.service` in `/etc/systemd/system`
-
-```bash
-vi /etc/systemd/system/aucc.service
-```
-
-### step 2:
-
-press i to enter in vim edit mode and paste folow (use the command in "ExecStart" line to specify aucc options):
-
-```bash
-[Unit]
-Description=Avell Keyboard Configuration
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/aucc -c red -b 1
-[Install]
-WantedBy=multi-user.target
-```
-
-to write and save the content press `ESC` and hold `Shift+zz`
-
-for more options about customize colors, brightness and styles, folow [Usage](https://github.com/rodgomesc/avell-unofficial-control-center#usage) Instructions
-
-### step 3:
-
-give permissions enable service and put it to work:
-
-```bash
-chmod 755 aucc.service # give permissions
-systemctl enable aucc.service # enable service
-systemctl daemon-reload # reload daemon for apply changes
-systemctl start aucc.service # start service
-systemctl status aucc.service #check status
-```
-
-reboot and enjoy :)
-
-if you want to change something in service file don't forget to reload the daemon and restart service:
-
-```bash
-systemctl daemon-reload
-systemctl restart aucc.service
 ```
 
 ### Thanks to

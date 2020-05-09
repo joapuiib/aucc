@@ -5,14 +5,16 @@ The full license is in the file LICENSE, distributed with this software.
 Created on May 22, 2019
 @author: @rodgomesc
 """
-import argparse, textwrap
-import sys, os
+import argparse
+import textwrap
+import sys
+import os
 from aucc.core.handler import DeviceHandler
 import time
 from aucc.core.colors import (get_mono_color_vector,
-                         get_h_alt_color_vector,
-                         get_v_alt_color_vector,
-                         _colors_available)
+                              get_h_alt_color_vector,
+                              get_v_alt_color_vector,
+                              _colors_available)
 
 
 light_style = {
@@ -21,10 +23,11 @@ light_style = {
     # 1     ???         0x02 to issue commands? Other values seem to cause failure. 0x01 appears to switch off lights
     # 2     Program     The 'effect' in use
     # 3     Speed       0x0?: 1,2,3,4,5,6,7,8,9,a (fastest to slowest)
-    # 4     Brightness  0x01 to 0x32
+    # 4     Brightness  0x08, 0x16, 0x24, 0x32
     # 5     Colour      0x0?: 1 red, 2 orange, 3 yellow, 4 green, 5 blue, 6 teal, 7 purple, 8 rainbow
     # 6     Program?    Required to be changed for some effects
-    # 7     ???         ??? - Other values appear to have no impact.
+    # 7     save changes (00 for no, 01 for yes)
+
     # Rainbow - No further settings available
     'rainbow': (0x08, 0x02, 0x05, 0x05, 0x24, 0x00, 0x00, 0x00),
     # Marquee (only accepts rainbow)
@@ -65,15 +68,15 @@ light_style = {
     'aurora': (0x08, 0x02, 0x0E, 0x05, 0x24, 0x08, 0x00, 0x00),
     # Random key red
     'randomr': (0x08, 0x02, 0x04, 0x05, 0x24, 0x01, 0x00, 0x00),
-    # Random keyorange 
+    # Random keyorange
     'randomo': (0x08, 0x02, 0x04, 0x05, 0x24, 0x02, 0x00, 0x00),
-    # Random key yellow 
+    # Random key yellow
     'randomy': (0x08, 0x02, 0x04, 0x05, 0x24, 0x03, 0x00, 0x00),
     # Random key green
     'randomg': (0x08, 0x02, 0x04, 0x05, 0x24, 0x04, 0x00, 0x00),
     # Random key blue
     'randomb': (0x08, 0x02, 0x04, 0x05, 0x24, 0x05, 0x00, 0x00),
-    # Random key teal 
+    # Random key teal
     'randomt': (0x08, 0x02, 0x04, 0x05, 0x24, 0x06, 0x00, 0x00),
     # Random key purple
     'randomp': (0x08, 0x02, 0x04, 0x05, 0x24, 0x07, 0x00, 0x00),
@@ -89,7 +92,7 @@ light_style = {
     'reactiveg': (0x08, 0x02, 0x04, 0x05, 0x24, 0x04, 0x01, 0x00),
     # Reactive blue
     'reactiveb': (0x08, 0x02, 0x04, 0x05, 0x24, 0x05, 0x01, 0x00),
-    # Reactive teal 
+    # Reactive teal
     'reactivet': (0x08, 0x02, 0x04, 0x05, 0x24, 0x06, 0x01, 0x00),
     # Reactive purple
     'reactivep': (0x08, 0x02, 0x04, 0x05, 0x24, 0x07, 0x01, 0x00),
@@ -144,24 +147,40 @@ light_style = {
     # Reactive ripple rainbow
     'reactiveripple': (0x08, 0x02, 0x07, 0x05, 0x24, 0x08, 0x00, 0x00),
     # Reactive aurora red
-    'reactiveaurora': (0x08, 0x02, 0x0e, 0x05, 0x24, 0x01, 0x01, 0x00),
+    'reactiveaurorar': (0x08, 0x02, 0x0e, 0x05, 0x24, 0x01, 0x01, 0x00),
     # Reactive aurora orange
-    'reactiveaurora': (0x08, 0x02, 0x0e, 0x05, 0x24, 0x02, 0x01, 0x00),
+    'reactiveaurorao': (0x08, 0x02, 0x0e, 0x05, 0x24, 0x02, 0x01, 0x00),
     # Reactive aurora yellow
-    'reactiveaurora': (0x08, 0x02, 0x0e, 0x05, 0x24, 0x03, 0x01, 0x00),
+    'reactiveauroray': (0x08, 0x02, 0x0e, 0x05, 0x24, 0x03, 0x01, 0x00),
     # Reactive aurora green
-    'reactiveaurora': (0x08, 0x02, 0x0e, 0x05, 0x24, 0x04, 0x01, 0x00),
+    'reactiveaurorag': (0x08, 0x02, 0x0e, 0x05, 0x24, 0x04, 0x01, 0x00),
     # Reactive aurora blue
-    'reactiveaurora': (0x08, 0x02, 0x0e, 0x05, 0x24, 0x05, 0x01, 0x00),
+    'reactiveaurorab': (0x08, 0x02, 0x0e, 0x05, 0x24, 0x05, 0x01, 0x00),
     # Reactive aurora teal
-    'reactiveaurora': (0x08, 0x02, 0x0e, 0x05, 0x24, 0x06, 0x01, 0x00),
+    'reactiveaurorat': (0x08, 0x02, 0x0e, 0x05, 0x24, 0x06, 0x01, 0x00),
     # Reactive aurora purple
-    'reactiveaurora': (0x08, 0x02, 0x0e, 0x05, 0x24, 0x07, 0x01, 0x00),
+    'reactiveaurorap': (0x08, 0x02, 0x0e, 0x05, 0x24, 0x07, 0x01, 0x00),
     # Reactive aurora rainbow
-    'reactiveaurora': (0x08, 0x02, 0x0e, 0x05, 0x24, 0x08, 0x01, 0x00)
+    'reactiveaurora': (0x08, 0x02, 0x0e, 0x05, 0x24, 0x08, 0x01, 0x00),
+    # Fireworks red
+    'fireworksr': (0x08, 0x02, 0x11, 0x05, 0x24, 0x01, 0x01, 0x00),
+    # Fireworks orange
+    'fireworkso': (0x08, 0x02, 0x11, 0x05, 0x24, 0x02, 0x01, 0x00),
+    # Fireworks yellow
+    'fireworksy': (0x08, 0x02, 0x11, 0x05, 0x24, 0x03, 0x01, 0x00),
+    # Fireworks green
+    'fireworksg': (0x08, 0x02, 0x11, 0x05, 0x24, 0x04, 0x01, 0x00),
+    # Fireworks blue
+    'fireworksb': (0x08, 0x02, 0x11, 0x05, 0x24, 0x05, 0x01, 0x00),
+    # Fireworks teal
+    'fireworkst': (0x08, 0x02, 0x11, 0x05, 0x24, 0x06, 0x01, 0x00),
+    # Fireworks purple
+    'fireworksp': (0x08, 0x02, 0x11, 0x05, 0x24, 0x07, 0x01, 0x00),
+    # Fireworks rainbow
+    'fireworks': (0x08, 0x02, 0x11, 0x05, 0x24, 0x08, 0x01, 0x00)
 }
 
-# Keybpoard brightness has 4 variations 0x08,0x16,0x24,0x32
+# Keyboard brightness has 4 variations 0x08,0x16,0x24,0x32
 brightness_map = {
     1: 0x08,
     2: 0x16,
@@ -189,8 +208,12 @@ class ControlCenter(DeviceHandler):
         else:
             self.adjust_brightness(4)
 
-    def color_scheme_setup(self):
-        self.ctrl_write(0x12, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00)
+    def color_scheme_setup(self, save_changes=0x01):
+        '''
+        options available: (0x00 for no, 0x01 for yes)
+        purpose: write changes on chip to keep current color on reboot
+        '''
+        self.ctrl_write(0x12, 0x00, 0x00, 0x08, save_changes, 0x00, 0x00, 0x00)
 
     def mono_color_setup(self, color_scheme):
 
@@ -230,18 +253,20 @@ def main():
             Colors available:
             [red|green|blue|teal|pink|purple|white|yellow|orange|olive|maroon|brown|gray|skyblue|navy|crimson|darkgreen|lightgreen|gold|violet] '''),
         formatter_class=argparse.RawDescriptionHelpFormatter)
-        
-    parser.add_argument('-c', '--color', help='Select a single color for all keys.')
-    parser.add_argument('-b', '--brightness', help='Set brightness, 1 is minimum, 4 is maximum.',type=int, choices=range(1,5))
+
+    parser.add_argument(
+        '-c', '--color', help='Select a single color for all keys.')
+    parser.add_argument(
+        '-b', '--brightness', help='Set brightness, 1 is minimum, 4 is maximum.', type=int, choices=range(1, 5))
     parser.add_argument('-H', '--h-alt', nargs=2,
                         help='Horizontal alternating colors')
     parser.add_argument('-V', '--v-alt', nargs=2,
                         help='Vertical alternating colors')
     parser.add_argument('-s', '--style',
-                        help='One of (rainbow, marquee, wave, raindrop, aurora, random, reactive, breathing, ripple, reactiveripple, reactiveaurora). Additional single colors are available for the following styles: raindrop, aurora, random, reactive, breathing, ripple, reactiveripple and reactiveaurora. These colors are: Red (r), Orange (o), Yellow (y), Green (g), Blue (b), Teal (t), Purple (p). Append those styles with the start letter of the color you would like (e.g. rippler = Ripple Red')
+                        help='One of (rainbow, marquee, wave, raindrop, aurora, random, reactive, breathing, ripple, reactiveripple, reactiveaurora, fireworks). Additional single colors are available for the following styles: raindrop, aurora, random, reactive, breathing, ripple, reactiveripple, reactiveaurora and fireworks. These colors are: Red (r), Orange (o), Yellow (y), Green (g), Blue (b), Teal (t), Purple (p). Append those styles with the start letter of the color you would like (e.g. rippler = Ripple Red')
     parser.add_argument('-d', '--disable', action='store_true',
                         help='Turn keyboard backlight off'),
-    
+
     parsed = parser.parse_args()
     if parsed.disable:
         control.disable_keyboard()
